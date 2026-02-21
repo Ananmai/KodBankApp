@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KodbankApp — Register &amp; Login</title>
+  <meta name="description"
+    content="KodbankApp — Secure, modern digital banking. Register or log in to manage your account." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="page-center">
+    <div class="card">
+
+      <!-- Brand / Logo -->
+      <div class="logo">
+        <div class="logo-icon">🏦</div>
+        <div>
+          <div class="logo-name">KodbankApp</div>
+          <div class="logo-tag">Secure Digital Banking</div>
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar" role="tablist">
+        <button id="tab-login" class="tab-btn active" role="tab" onclick="switchTab('login')">Login</button>
+        <button id="tab-register" class="tab-btn" role="tab" onclick="switchTab('register')">Register</button>
+        <button id="tab-forgot" class="tab-btn" role="tab" onclick="switchTab('forgot')">Forgot?</button>
+      </div>
+
+      <!-- Alert Box -->
+      <div id="alert" class="alert" role="alert"></div>
+
+      <!-- ── LOGIN FORM ──────────────────────────── -->
+      <form id="loginForm" autocomplete="off" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input id="login-email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Password</label>
+          <input id="login-pass" type="password" placeholder="Enter your password" required
+            autocomplete="current-password" />
+        </div>
+        <button id="loginBtn" type="submit" class="btn-primary">Login to Account</button>
+        <div class="divider">or</div>
+        <p style="text-align:center;font-size:13px;color:var(--text-muted)">
+          Don't have an account?
+          <a href="#" onclick="switchTab('register')"
+            style="color:var(--gold);font-weight:600;text-decoration:none;">Register here</a>
+          &nbsp;·&nbsp;
+          <a href="#" onclick="switchTab('forgot')"
+            style="color:var(--text-muted);font-weight:600;text-decoration:none;">Forgot password?</a>
+        </p>
+      </form>
+
+      <!-- ── REGISTER FORM ───────────────────────── -->
+      <form id="registerForm" style="display:none;" autocomplete="off" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input id="reg-name" type="text" placeholder="John Doe" required autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input id="reg-email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="reg-pass">Password</label>
+          <input id="reg-pass" type="password" placeholder="Create a strong password" required
+            autocomplete="new-password" minlength="4" />
+        </div>
+        <div class="form-group">
+          <label for="reg-balance">Initial Deposit (₹)</label>
+          <input id="reg-balance" type="number" placeholder="e.g. 5000" min="0" step="0.01" autocomplete="off" />
+        </div>
+        <button id="registerBtn" type="submit" class="btn-primary">Create Account</button>
+        <div class="divider">or</div>
+        <p style="text-align:center;font-size:13px;color:var(--text-muted)">
+          Already have an account?
+          <a href="#" onclick="switchTab('login')" style="color:var(--gold);font-weight:600;text-decoration:none;">Login
+            here</a>
+        </p>
+      </form>
+
+      <!-- ── FORGOT PASSWORD FORM ────────────────── -->
+      <form id="forgotForm" style="display:none;" autocomplete="off" onsubmit="handleForgotPassword(event)">
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:20px;text-align:center;line-height:1.6">
+          Enter your registered email and a new password.
+        </p>
+        <div class="form-group">
+          <label for="forgot-email">Email Address</label>
+          <input id="forgot-email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="forgot-newpass">New Password</label>
+          <input id="forgot-newpass" type="password" placeholder="Enter new password (min 4 chars)" required
+            minlength="4" />
+        </div>
+        <button id="forgotBtn" type="submit" class="btn-primary">🔑 Reset Password</button>
+        <div class="divider">or</div>
+        <p style="text-align:center;font-size:13px;color:var(--text-muted)">
+          Remembered it?
+          <a href="#" onclick="switchTab('login')" style="color:var(--gold);font-weight:600;text-decoration:none;">Back
+            to Login</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

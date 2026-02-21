@@ -1,0 +1,17 @@
+node_modules/
+.env
+*.ps1
+*.sql
+*.webp
+*.png
+.gemini/
+brain/
+resettest.ps1
+aitest.ps1
+cookietest.ps1
+bearertest.ps1
+logintest.ps1
+trypass.ps1
+reglogintest.ps1
+check_user.sql
+db_setup.sql

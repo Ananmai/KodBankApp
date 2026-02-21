@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KodbankApp — Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="dash-body">
+
+    <!-- ╔══════════════ TOP NAVBAR ══════════════╗ -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <span class="top-logo-icon">🏦</span>
+            <div>
+                <div class="top-logo-name">KODBANKAPP</div>
+                <div class="top-logo-sub">INTERNET BANKING</div>
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <div class="user-menu" id="userMenu" onclick="toggleUserDropdown()">
+                <span id="topUserName">Loading…</span>
+                <span class="caret">▾</span>
+                <div class="user-dropdown" id="userDropdown">
+                    <button class="dropdown-item" onclick="showPanel('profile')">👤 Profile</button>
+                    <hr class="dropdown-hr" />
+                    <button class="dropdown-item danger" onclick="logout()">⎋ Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ╔══════════════ LAYOUT WRAPPER ══════════════╗ -->
+    <div class="dash-layout">
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <button class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')">
+                    <span class="nav-icon">⊞</span> Dashboard
+                </button>
+                <button class="nav-item" id="nav-deposit" onclick="showPanel('deposit')">
+                    <span class="nav-icon">⊕</span> Deposit
+                </button>
+                <button class="nav-item" id="nav-withdraw" onclick="showPanel('withdraw')">
+                    <span class="nav-icon">⊖</span> Withdraw
+                </button>
+                <button class="nav-item" id="nav-transfer" onclick="showPanel('transfer')">
+                    <span class="nav-icon">⇄</span> Transfer
+                </button>
+                <button class="nav-item" id="nav-transactions" onclick="showPanel('transactions')">
+                    <span class="nav-icon">☰</span> Transactions
+                </button>
+                <button class="nav-item" id="nav-profile" onclick="showPanel('profile')">
+                    <span class="nav-icon">◉</span> Profile
+                </button>
+            </nav>
+        </aside>
+
+        <!-- ── Main Content ── -->
+        <main class="main-content">
+
+            <!-- Alert -->
+            <div class="alert" id="dashAlert"></div>
+
+            <!-- ════════ PANEL: Dashboard ════════ -->
+            <section id="panel-dashboard">
+                <h1 class="panel-title">Account Dashboard</h1>
+
+                <!-- Stats Cards -->
+                <div class="stats-row">
+                    <div class="stat-card blue">
+                        <div class="stat-icon">💳</div>
+                        <div>
+                            <div class="stat-label">CURRENT BALANCE</div>
+                            <div class="stat-value" id="statBalance">Loading…</div>
+                        </div>
+                    </div>
+                    <div class="stat-card teal">
+                        <div class="stat-icon">🔢</div>
+                        <div>
+                            <div class="stat-label">ACCOUNT NUMBER</div>
+                            <div class="stat-value mono" id="statAccno">—</div>
+                        </div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">🏛️</div>
+                        <div>
+                            <div class="stat-label">IFSC CODE</div>
+                            <div class="stat-value mono" id="statIfsc">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section-card">
+                    <h2 class="section-heading">Quick Actions</h2>
+                    <div class="quick-actions">
+                        <button class="qa-btn" onclick="showPanel('deposit')">⊕ Deposit Funds</button>
+                        <button class="qa-btn" onclick="showPanel('withdraw')">⊖ Withdraw Funds</button>
+                        <button class="qa-btn" onclick="showPanel('transfer')">⇄ Transfer Money</button>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="section-card">
+                    <div class="section-heading-row">
+                        <h2 class="section-heading">Recent Transactions</h2>
+                        <button class="view-all-btn" onclick="showPanel('transactions')">View All</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="txn-table" id="recentTxnTable">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>TYPE</th>
+                                    <th>AMOUNT</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTxnBody">
+                                <tr>
+                                    <td colspan="5" class="empty-row">No transactions yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: Deposit ════════ -->
+            <section id="panel-deposit" style="display:none">
+                <h1 class="panel-title">Deposit Funds</h1>
+                <div class="form-card">
+                    <div class="form-icon green">⊕</div>
+                    <p class="form-desc">Add money to your KodbankApp account instantly.</p>
+                    <form onsubmit="handleDeposit(event)">
+                        <div class="form-group">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="deposit-amount" placeholder="Enter amount" min="1" step="0.01"
+                                required />
+                        </div>
+                        <button type="submit" class="btn-action green" id="depositBtn">⊕ Add Money</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: Withdraw ════════ -->
+            <section id="panel-withdraw" style="display:none">
+                <h1 class="panel-title">Withdraw Funds</h1>
+                <div class="form-card">
+                    <div class="form-icon red">⊖</div>
+                    <p class="form-desc">Withdraw money from your KodbankApp account.</p>
+                    <form onsubmit="handleWithdraw(event)">
+                        <div class="form-group">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="withdraw-amount" placeholder="Enter amount" min="1" step="0.01"
+                                required />
+                        </div>
+                        <button type="submit" class="btn-action red" id="withdrawBtn">⊖ Withdraw</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: Transfer ════════ -->
+            <section id="panel-transfer" style="display:none">
+                <h1 class="panel-title">Transfer Money</h1>
+                <div class="form-card">
+                    <div class="form-icon blue">⇄</div>
+                    <p class="form-desc">Send money to another KodbankApp user instantly.</p>
+                    <form onsubmit="handleTransfer(event)">
+                        <div class="form-group">
+                            <label>Recipient Email</label>
+                            <input type="email" id="recipient-email" placeholder="user@example.com" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="transfer-amount" placeholder="Enter amount" min="1" step="0.01"
+                                required />
+                        </div>
+                        <button type="submit" class="btn-action blue" id="transferBtn">⇄ Send Money</button>
+                    </form>
+                    <div class="divider">OR</div>
+                    <h3 class="sub-heading">Validate Account Number</h3>
+                    <div class="validate-row">
+                        <input type="text" id="validateInput" placeholder="e.g. KODBK0000000001" style="flex:1" />
+                        <button type="button" class="btn-validate" id="validateBtn"
+                            onclick="validateAccount()">Check</button>
+                    </div>
+                    <div id="validateResult" class="validate-result" style="display:none"></div>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: Transactions ════════ -->
+            <section id="panel-transactions" style="display:none">
+                <h1 class="panel-title">All Transactions</h1>
+                <div class="section-card">
+                    <div class="table-wrap">
+                        <table class="txn-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>TYPE</th>
+                                    <th>AMOUNT</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allTxnBody">
+                                <tr>
+                                    <td colspan="5" class="empty-row">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: Profile ════════ -->
+            <section id="panel-profile" style="display:none">
+                <h1 class="panel-title">My Profile</h1>
+                <div class="profile-grid">
+                    <div class="section-card">
+                        <div class="profile-avatar-lg" id="profileAvatar">?</div>
+                        <div class="profile-name-lg" id="profileName">—</div>
+                        <div class="profile-email-lg" id="profileEmail">—</div>
+                    </div>
+                    <div class="section-card">
+                        <h2 class="section-heading">Account Details</h2>
+                        <div class="detail-row"><span class="detail-label">Account Number</span><span
+                                class="detail-val mono" id="profileAccno">—</span></div>
+                        <div class="detail-row"><span class="detail-label">IFSC Code</span><span class="detail-val mono"
+                                id="profileIfsc">—</span></div>
+                        <div class="detail-row"><span class="detail-label">Account Type</span><span
+                                class="detail-val">Savings Account</span></div>
+                        <div class="detail-row"><span class="detail-label">Session Expires</span><span
+                                class="detail-val" id="profileExpiry">—</span></div>
+                        <button class="copy-btn" onclick="copyAccno()">⎘ Copy Account Number</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════ PANEL: AI Agent ════════ -->
+            <section id="panel-ai" style="display:none">
+                <h1 class="panel-title">🤖 AI Banking Assistant <span class="ai-badge">Tiny Aya · Cohere Labs</span>
+                </h1>
+                <div class="ai-chat-wrap">
+                    <!-- Chat Messages -->
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-msg bot">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble">
+                                Hi! I'm your KodbankApp AI assistant powered by <strong>Tiny Aya</strong> (Cohere Labs).
+                                I can help you with banking questions, financial tips, savings advice, and more.
+                                What can I help you with today?
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Prompts -->
+                    <div class="ai-quick-prompts" id="aiQuickPrompts">
+                        <button class="ai-chip" onclick="sendAiChip('How can I save more money?')">💰 Save more
+                            money</button>
+                        <button class="ai-chip" onclick="sendAiChip('What is IFSC code used for?')">🏦 What is
+                            IFSC?</button>
+                        <button class="ai-chip" onclick="sendAiChip('How to improve my credit score?')">📈 Credit score
+                            tips</button>
+                        <button class="ai-chip" onclick="sendAiChip('What are good investment options in India?')">📊
+                            Investment options</button>
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div class="ai-input-bar">
+                        <input type="text" id="aiInput" class="ai-input"
+                            placeholder="Ask me anything about banking or finance…"
+                            onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendAiMessage();}" />
+                        <button class="ai-send-btn" id="aiSendBtn" onclick="sendAiMessage()">➤</button>
+                        <button class="ai-clear-btn" onclick="clearAiChat()" title="Clear chat">🗑</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Fixed AI Agent Floating Tab -->
+    <button class="ai-float-tab" id="aiFloatBtn" onclick="showPanel('ai')" title="AI Banking Agent">
+        <span class="ai-float-icon">🤖</span>
+        <span class="ai-float-label">AI Agent</span>
+    </button>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

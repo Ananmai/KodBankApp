@@ -435,14 +435,21 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 //  DB INIT — auto-creates DB, both tables, and applies schema migrations
 // ════════════════════════════════════════════════════════════════════════════════
 async function initDB() {
-    // Vercel check: if vars are missing, don't even try and throw early
-    const host = process.env.DB_HOST;
-    if (!host) {
-        console.error('❌ DB_HOST is missing. Check your environment variables.');
-        return false;
+    // Trim and normalize environment variables to prevent copy-paste whitespace issues
+    const host = (process.env.DB_HOST || '').trim();
+    const user = (process.env.DB_USER || 'root').trim();
+    const password = (process.env.DB_PASSWORD || '').trim();
+    const dbName = (process.env.DB_NAME || 'kodbankapp').trim();
+    const port = parseInt(process.env.DB_PORT) || 3306;
+
+    if (!host || host === 'localhost') {
+        if (process.env.VERCEL) {
+            console.error('❌ DB_HOST is missing or set to localhost on Vercel.');
+            return false;
+        }
     }
 
-    console.log('🔌 Connecting to MySQL...');
+    console.log(`🔌 Connecting to MySQL at ${host}:${port}...`);
 
     // Assign db pool immediately so other parts of the app can use it
     if (!db) {
@@ -456,9 +463,9 @@ async function initDB() {
     try {
         const conn = await mysql.createConnection({
             host: host,
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            port: parseInt(process.env.DB_PORT) || 3306,
+            user: user,
+            password: password,
+            port: port,
             ssl: host && !host.includes('localhost') ? { rejectUnauthorized: false } : null
         });
         const dbName = process.env.DB_NAME || 'kodbankapp';
@@ -528,16 +535,18 @@ async function initDB() {
     } catch (err) {
         let msg = err.message;
         if (host.includes('.i.aivencloud.com')) {
-            msg = 'INTERNAL HOST ERROR: Use the public hostname from Aiven (the one without ".i.")';
+            msg = 'INTERNAL HOST ERROR: You used the Internal host. Go to Aiven console and copy the "Host" from the "Connection Information" section (it should NOT have ".i." in it).';
+        } else if (err.code === 'ENOTFOUND') {
+            msg = `HOSTNAME NOT FOUND: Could not find "${host}". Check for typos or extra spaces in Vercel settings. Ensure you copied the exact "Host" from Aiven.`;
         } else if (err.code === 'ECONNREFUSED') {
-            msg = 'MySQL not running (Check DB_HOST and if database is public)';
+            msg = `CONNECTION REFUSED: Could not connect to ${host}:${port}. Check if the port is correct in Vercel (Aiven ports are usually not 3306).`;
         } else if (err.code === 'ER_ACCESS_DENIED_ERROR') {
-            msg = 'Wrong credentials (Check DB_USER / DB_PASSWORD)';
+            msg = 'INVALID CREDENTIALS: Check your DB_USER and DB_PASSWORD in Vercel settings.';
         }
 
         console.error('\n❌ DB Error:', msg);
 
-        if (err.code === 'ECONNREFUSED' || err.code === 'ER_ACCESS_DENIED_ERROR' || host.includes('.i.')) {
+        if (err.code === 'ECONNREFUSED' || err.code === 'ER_ACCESS_DENIED_ERROR' || err.code === 'ENOTFOUND' || host.includes('.i.')) {
             db = null;
         }
         return false;

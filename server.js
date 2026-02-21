@@ -23,9 +23,24 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next) => {
-    if (!db && req.path.startsWith('/api'))
-        return res.status(503).json({ error: 'Database not connected. Restart server.' });
+// ── Vercel/Serverless: Attempt to init DB on request if it failed at boot ──
+app.use(async (req, res, next) => {
+    // If it's an API call and DB isn't fully ready, try one more time (lazy init)
+    if (req.path.startsWith('/api') && !db) {
+        console.log('🔄 Lazy-initializing DB connection...');
+        await initDB().catch(e => console.error('Lazy init failed:', e.message));
+    }
+
+    if (!db && req.path.startsWith('/api')) {
+        const missingVars = ['DB_HOST', 'DB_USER', 'DB_NAME'].filter(v => !process.env[v]);
+        let errorMsg = '❌ Database not connected.';
+        if (missingVars.length > 0) {
+            errorMsg += ` Missing environment variables: ${missingVars.join(', ')}. Please add them in Vercel settings.`;
+        } else {
+            errorMsg += ' Check if your database allows connections from Vercel IPs.';
+        }
+        return res.status(503).json({ error: errorMsg });
+    }
     next();
 });
 
@@ -416,10 +431,27 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 //  DB INIT — auto-creates DB, both tables, and applies schema migrations
 // ════════════════════════════════════════════════════════════════════════════════
 async function initDB() {
+    // Vercel check: if vars are missing, don't even try and throw early
+    const host = process.env.DB_HOST;
+    if (!host) {
+        console.error('❌ DB_HOST is missing. Check your environment variables.');
+        return false;
+    }
+
     console.log('🔌 Connecting to MySQL...');
+
+    // Assign db pool immediately so other parts of the app can use it
+    if (!db) {
+        try {
+            db = require('./db');
+        } catch (e) {
+            console.error('❌ Failed to load db.js pool:', e.message);
+        }
+    }
+
     try {
         const conn = await mysql.createConnection({
-            host: process.env.DB_HOST || 'localhost',
+            host: host,
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
             port: parseInt(process.env.DB_PORT) || 3306
@@ -454,7 +486,7 @@ async function initDB() {
              WHERE account_number IS NULL OR account_number = ''
         `);
 
-        // jwt_tokens table — VARCHAR(512) + index (TOKEN STORAGE FIX)
+        // jwt_tokens table
         await conn.query(`
             CREATE TABLE IF NOT EXISTS jwt_tokens (
                 id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -485,29 +517,33 @@ async function initDB() {
             )
         `);
 
-
         console.log(`✅ Database "${dbName}" ready.`);
-        console.log('✅ Tables: bank_users ✓  jwt_tokens ✓  transactions ✓');
         await conn.end();
-
-        db = require('./db');
         return true;
     } catch (err) {
         console.error('\n❌ DB Error:', err.code === 'ECONNREFUSED'
-            ? 'MySQL not running. Start XAMPP MySQL first.'
+            ? 'MySQL not running (Check DB_HOST and if database is public)'
             : err.code === 'ER_ACCESS_DENIED_ERROR'
-                ? 'Wrong credentials in .env'
+                ? 'Wrong credentials (Check DB_USER / DB_PASSWORD)'
                 : err.message
         );
+        // Important: if it's not a migration error but a connection error, 
+        // we might want to unset db so it retries later
+        if (err.code === 'ECONNREFUSED' || err.code === 'ER_ACCESS_DENIED_ERROR') {
+            db = null;
+        }
         return false;
     }
 }
 
 const PORT = process.env.PORT || 3000;
 initDB().then(ok => {
+    if (process.env.VERCEL) return; // Don't block Vercel boot
     app.listen(PORT, () =>
         console.log(ok
             ? `\n🚀 KodbankApp → http://localhost:${PORT}\n`
             : `\n⚠️  Server started but DB is NOT connected.\n`)
     );
 });
+
+module.exports = app;

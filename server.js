@@ -373,6 +373,9 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
 
 // ── POST /api/ai-chat (HF Router · tiny-aya Space via Together) ──────────────
 app.post('/api/ai-chat', authenticateToken, async (req, res) => {
+    if (!HF_API_KEY) {
+        return res.status(503).json({ error: '❌ HF_API_KEY is missing. Please add it to your Vercel Environment Variables.' });
+    }
     const { message, history = [] } = req.body;
     if (!message || !message.trim())
         return res.status(400).json({ error: 'Message is required.' });

@@ -454,7 +454,8 @@ async function initDB() {
             host: host,
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
-            port: parseInt(process.env.DB_PORT) || 3306
+            port: parseInt(process.env.DB_PORT) || 3306,
+            ssl: host && !host.includes('localhost') ? { rejectUnauthorized: false } : null
         });
         const dbName = process.env.DB_NAME || 'kodbankapp';
 

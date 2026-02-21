@@ -32,9 +32,13 @@ app.use(async (req, res, next) => {
     }
 
     if (!db && req.path.startsWith('/api')) {
+        const host = process.env.DB_HOST || '';
         const missingVars = ['DB_HOST', 'DB_USER', 'DB_NAME'].filter(v => !process.env[v]);
         let errorMsg = '❌ Database not connected.';
-        if (missingVars.length > 0) {
+
+        if (host.includes('.i.aivencloud.com')) {
+            errorMsg += ' ⚠️ You are using an INTERNAL Aiven host. Please use the EXTERNAL host from Aiven console (the one without ".i.").';
+        } else if (missingVars.length > 0) {
             errorMsg += ` Missing environment variables: ${missingVars.join(', ')}. Please add them in Vercel settings.`;
         } else {
             errorMsg += ' Check if your database allows connections from Vercel IPs.';
@@ -522,15 +526,18 @@ async function initDB() {
         await conn.end();
         return true;
     } catch (err) {
-        console.error('\n❌ DB Error:', err.code === 'ECONNREFUSED'
-            ? 'MySQL not running (Check DB_HOST and if database is public)'
-            : err.code === 'ER_ACCESS_DENIED_ERROR'
-                ? 'Wrong credentials (Check DB_USER / DB_PASSWORD)'
-                : err.message
-        );
-        // Important: if it's not a migration error but a connection error, 
-        // we might want to unset db so it retries later
-        if (err.code === 'ECONNREFUSED' || err.code === 'ER_ACCESS_DENIED_ERROR') {
+        let msg = err.message;
+        if (host.includes('.i.aivencloud.com')) {
+            msg = 'INTERNAL HOST ERROR: Use the public hostname from Aiven (the one without ".i.")';
+        } else if (err.code === 'ECONNREFUSED') {
+            msg = 'MySQL not running (Check DB_HOST and if database is public)';
+        } else if (err.code === 'ER_ACCESS_DENIED_ERROR') {
+            msg = 'Wrong credentials (Check DB_USER / DB_PASSWORD)';
+        }
+
+        console.error('\n❌ DB Error:', msg);
+
+        if (err.code === 'ECONNREFUSED' || err.code === 'ER_ACCESS_DENIED_ERROR' || host.includes('.i.')) {
             db = null;
         }
         return false;
